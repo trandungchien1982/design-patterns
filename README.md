@@ -16,46 +16,56 @@ D:\Projects\design-patterns
 
 ==============================================================
 
-# Ví dụ [02.Factory]
+# Ví dụ [03.Observer]
 ==============================================================
 
 **Tham khảo**
-- https://gpcoder.com/4352-huong-dan-java-design-pattern-factory-method/
-- https://refactoring.guru/design-patterns/factory-method
-- https://www.digitalocean.com/community/tutorials/factory-design-pattern-in-java
+- https://viblo.asia/p/design-pattern-observer-V3m5WO8W5O7
+- https://www.digitalocean.com/community/tutorials/observer-design-pattern-in-java
 
-**Ví dụ như tạo 1 Bank dựa trên BankType (VCB / TPB/ ACB), Factory sẽ sản xuất Object theo yêu cầu của parameters :**<br/>
+**Mô hình tương đồng với cơ chế Pub/Sub với Topic <=> Subject :**<br/>
+- Topic/Subject là nơi chứa liên kết đến các Subscribers
+- Mỗi khi topic raise lên 1 message thì các subscribers sẽ consume message đó và có xử lý tương ứng<br/>
+  (được mô tả trong Subscriber)
 ```shell
-  public static void main(String[] args) {
-    log.info(" >> Start Apps ... ");
-    log.info(" ... Bank 1: " + BankFactory.createBank(BankType.ACB));
-    log.info(" ... Bank 2: " + BankFactory.createBank(BankType.TPB));
-    log.info(" ... Bank 3: " + BankFactory.createBank(BankType.VCB));
-    log.info(" ------------ FINISH -------------");
+public interface Observer {
+  public void consume(String message);
+}
+
+
+public class SubjectTopic {
+
+  private List<Observer> observers = new LinkedList<>();
+  public void attach(Observer observer) {
+    observers.add(observer);
   }
+  public void detach(Observer observer) {
+    observers.remove(observer);
+  }
+  public void publish(String message) {
+    for(Observer observer : observers) {
+      observer.consume(message);
+    }
+  }
+}
+
 -------------------------------------------------------------------------------
 
-Nov 25, 2023 7:11:20 PM demo.main.MainApp main
-INFO:  >> Start Apps ... 
-Nov 25, 2023 7:11:21 PM demo.factory.BankFactory createBank
-INFO: -------------------------------------------------
-Nov 25, 2023 7:11:21 PM demo.factory.BankFactory createBank
-INFO:  >> Try to create new Bank with type: ACB
-Nov 25, 2023 7:11:21 PM demo.main.MainApp main
-INFO:  ... Bank 1: demo.impls.ACBBank@4f3f5b24
-Nov 25, 2023 7:11:21 PM demo.factory.BankFactory createBank
-INFO: -------------------------------------------------
-Nov 25, 2023 7:11:21 PM demo.factory.BankFactory createBank
-INFO:  >> Try to create new Bank with type: TPB
-Nov 25, 2023 7:11:21 PM demo.main.MainApp main
-INFO:  ... Bank 2: demo.impls.TpBank@7b23ec81
-Nov 25, 2023 7:11:21 PM demo.factory.BankFactory createBank
-INFO: -------------------------------------------------
-Nov 25, 2023 7:11:21 PM demo.factory.BankFactory createBank
-INFO:  >> Try to create new Bank with type: VCB
-Nov 25, 2023 7:11:21 PM demo.main.MainApp main
-INFO:  ... Bank 3: demo.impls.VietcomBank@5f184fc6
-Nov 25, 2023 7:11:21 PM demo.main.MainApp main
+Nov 25, 2023 10:45:33 PM demo.main.MainApp main
+INFO:  >> Start Apps for Observer ... 
+Nov 25, 2023 10:45:33 PM demo.impls.Observer01 consume
+INFO:  >> Consume message on Observer01, message: The message 01 from Topic ... 
+Nov 25, 2023 10:45:33 PM demo.impls.Observer02 consume
+INFO:  >> Consume message on Observer02, message: The message 01 from Topic ... 
+Nov 25, 2023 10:45:33 PM demo.impls.Observer03 consume
+INFO:  >> Consume message on Observer03, message: The message 01 from Topic ... 
+Nov 25, 2023 10:45:33 PM demo.main.MainApp main
+INFO:  ------------- Remove subscriber02 out of list of subscribers ---------- 
+Nov 25, 2023 10:45:33 PM demo.impls.Observer01 consume
+INFO:  >> Consume message on Observer01, message: New message IX from Topic ... 
+Nov 25, 2023 10:45:33 PM demo.impls.Observer03 consume
+INFO:  >> Consume message on Observer03, message: New message IX from Topic ... 
+Nov 25, 2023 10:45:33 PM demo.main.MainApp main
 INFO:  ------------ FINISH -------------
 
 ```
