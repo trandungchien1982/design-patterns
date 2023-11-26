@@ -16,87 +16,98 @@ D:\Projects\design-patterns
 
 ==============================================================
 
-# Ví dụ [04.Builder]
+# Ví dụ [05.Facade]
 ==============================================================
 
+**Ý tưởng: Ẩn đi sự phức tạp của hệ thống con bên trong và đưa ra những phương thức dễ sử dụng cho UserClients**<br/>
+**Có thể xem đây là 1 service đặc biệt để gom logic phức tạp của hệ thống vào các hàm đơn giản**
+
 **Tham khảo**
-- https://gpcoder.com/4434-huong-dan-java-design-pattern-builder/
-- https://www.baeldung.com/java-builder-pattern-freebuilder
-- https://www.javastackflow.com/2022/09/how-to-use-builder-design-pattern-with.html
+- https://gpcoder.com/4604-huong-dan-java-design-pattern-facade/
+- https://viblo.asia/p/facade-design-pattern-tro-thu-dac-luc-cua-developers-924lJBLNlPM
 
-**Sử dụng Builder Pattern với việc chia nhỏ setter methods bên trong Builder :**<br/>
-- Các methods setter option sẽ được gọi linh động lúc tạo instance mới
-- Mỗi lần gọi setter option nối tiếp thì sẽ trả về Object Builder để xử lý tiếp
-- Khi hoàn tất Builder Object, ta sẽ gọi method build() của Builder để tạo Object thực tế.
+**Tạo 1 `ShopFacade` để cung cấp dịch vụ mua hàng :**<br/>
+- Có nhiều dịch vụ con bên trong, bao gồm `AccountService`, `PaymentService`, `ShippingService`, `EmailService`, `SMSService`
+- `ShopFacade` cung cấp phương thức mua hàng bằng tiền mặt, thanh toán online, ...
+- Mỗi phương thức mua hàng sẽ kèm theo gọi các dịch vụ tương ứng, vd như `EmailService`, `SMSService`
+- ClientUsers khi mua hàng chỉ quan tâm đến việc gọi ShopFacade, bỏ qua sự phức tạp khi phải triệu hồi 1 loạt các dịch vụ khác
 
-**Tạo BankAccount dựa vào BankAccountBuilder**
+**Mã nguồn tham khảo**
 ```shell
-log.info(" >> Start Apps for Builder Pattern ... ");
+public class ShopFacade {
+  private static final ShopFacade INSTANCE = new ShopFacade();
 
-BankAccount account1 = new BankAccount.BankAccountBuilder("name1", "MobileNumber01")
-    .withAddress("The Address 01")
-    .withEmail("email01@test.com")
-    .wantNewsletter(true)
-    .build();
+  Logger log = LoggerFactory.getLogger(getClass());
 
-BankAccount account2 = new BankAccount.BankAccountBuilder("name2", "MobileNumber02")
-    .build();
+  private AccountService accountService;
+  private PaymentService paymentService;
+  private ShippingService shippingService;
+  private EmailService emailService;
+  private SmsService smsService;
 
-BankAccount account3 = new BankAccount.BankAccountBuilder("name3", "MobileNumber03")
-    .withAddress("The Address 03")
-    .wantMobileBanking(true)
-    .build();
+  private ShopFacade() {
+    accountService = new AccountService();
+    paymentService = new PaymentService();
+    shippingService = new ShippingService();
+    emailService = new EmailService();
+    smsService = new SmsService();
+  }
 
-log.info("[MainApp] :: The account1: " + account1);
-log.info("[MainApp] :: The account2: " + account2);
-log.info("[MainApp] :: The account3: " + account3);
+  public static ShopFacade getInstance() {
+    return INSTANCE;
+  }
 
-------------------------------------------------------------------------------------------
+  public void buyProductByCashWithFreeShipping(String email) {
+    log.info("[ShopFacade] :: Buy product by Cash with FreeShipping, email: " + email);
+    accountService.getAccount(email);
+    paymentService.paymentByCash();
+    shippingService.freeShipping();
+    emailService.sendMail(email);
+    log.info("[ShopFacade] :: Buy product by Cash with FreeShipping => DONE");
+  }
+
+  public void buyProductByPaypalWithStandardShipping(String email, String mobilePhone) {
+    log.info("[ShopFacade] :: Buy product by Paypal with Standard Shipping, email: " + email + ", mobilePhone: " + mobilePhone);
+    accountService.getAccount(email);
+    paymentService.paymentByPaypal();
+    shippingService.standardShipping();
+    emailService.sendMail(email);
+    smsService.sendSMS(mobilePhone);
+    log.info("[ShopFacade] :: Buy product by Paypal ... => DONE");
+  }
+}
+```
+
+**Kết quả thực thi**
+```shell
+log.info(" >> Start Apps for Facade Pattern ... ");
+log.info(" ------------------------------------------------------------------------------");
+ShopFacade.getInstance().buyProductByCashWithFreeShipping("contact@gpcoder.com");
+
+log.info(" ------------------------------------------------------------------------------");
+ShopFacade.getInstance().buyProductByPaypalWithStandardShipping(
+    "gpcodervn@gmail.com", "0988.999.999");
+log.info(" ------------ FINISH -------------");
+
+---------------------------------------------------------------------------------------------------
 
 > Task :MainApp.main()
-10:21:01.934 [main] INFO  -  >> Start Apps for Builder Pattern ... 
-10:21:01.938 [main] INFO  - -------------------------------------------------------------
-10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting name/accountNumber
-10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting address
-10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting email
-10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting newsletter
-10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Try to build concrete Bank Account object: ... 
-10:21:01.940 [main] INFO  - -------------------------------------------------------------
-10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting name/accountNumber
-10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Try to build concrete Bank Account object: ... 
-10:21:01.940 [main] INFO  - -------------------------------------------------------------
-10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting name/accountNumber
-10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting address
-10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting mobileBanking
-10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Try to build concrete Bank Account object: ... 
-10:21:01.974 [main] INFO  - [MainApp] :: The account1: BankAccount [name=name1, accountNumber=MobileNumber01, address=The Address 01, email=email01@test.com, newsletter=true, mobileBanking=false]
-10:21:01.974 [main] INFO  - [MainApp] :: The account2: BankAccount [name=name2, accountNumber=MobileNumber02, address=null, email=null, newsletter=false, mobileBanking=false]
-10:21:01.974 [main] INFO  - [MainApp] :: The account3: BankAccount [name=name3, accountNumber=MobileNumber03, address=The Address 03, email=null, newsletter=false, mobileBanking=true]
-10:21:01.974 [main] INFO  -  ------------ FINISH -------------
+22:34:23.556 [main] INFO  -  >> Start Apps for Facade Pattern ... 
+22:34:23.560 [main] INFO  -  ------------------------------------------------------------------------------
+22:34:23.564 [main] INFO  - [ShopFacade] :: Buy product by Cash with FreeShipping, email: contact@gpcoder.com
+22:34:23.566 [main] INFO  - [AccountService] :: Getting the account of contact@gpcoder.com
+22:34:23.566 [main] INFO  - [PaymentService] :: Payment by cash
+22:34:23.566 [main] INFO  - [ShippingService] :: Free Shipping
+22:34:23.566 [main] INFO  - [EmailService] :: Sending an email to contact@gpcoder.com
+22:34:23.566 [main] INFO  - [ShopFacade] :: Buy product by Cash with FreeShipping => DONE
+22:34:23.566 [main] INFO  -  ------------------------------------------------------------------------------
+22:34:23.572 [main] INFO  - [ShopFacade] :: Buy product by Paypal with Standard Shipping, email: gpcodervn@gmail.com, mobilePhone: 0988.999.999
+22:34:23.573 [main] INFO  - [AccountService] :: Getting the account of gpcodervn@gmail.com
+22:34:23.573 [main] INFO  - [PaymentService] :: Payment by Paypal
+22:34:23.573 [main] INFO  - [ShippingService] :: Standard Shipping
+22:34:23.573 [main] INFO  - [EmailService] :: Sending an email to gpcodervn@gmail.com
+22:34:23.575 [main] INFO  - [SMSService] :: Sending an mesage to 0988.999.999
+22:34:23.575 [main] INFO  - [ShopFacade] :: Buy product by Paypal ... => DONE
+22:34:23.575 [main] INFO  -  ------------ FINISH -------------
 
-```
-
-
-**Apply Builder Pattern bằng cách sử dụng annotation `@FreeBuilder`**<br/>
-(Dựa vào dependency: `https://mvnrepository.com/artifact/org.inferred/freebuilder`)
-```shell
-@FreeBuilder
-public interface Employee {
- 
-    String name();
-    int age();
-    String department();
-    
-    class Builder extends Employee_Builder {
-    }
-```
-
-**Ứng dụng thực tế**
-- Sử dụng trong khai báo của Spring Security
-```shell
-UserDetails user = User
-    .withUsername("user")
-    .password("$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG")
-    .roles("USER_ROLE")
-    .build();
 ```
