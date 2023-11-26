@@ -16,56 +16,99 @@ D:\Projects\design-patterns
 
 ==============================================================
 
-# Ví dụ [03.Observer]
+# Ví dụ [04.Builder]
 ==============================================================
 
 **Tham khảo**
-- https://viblo.asia/p/design-pattern-observer-V3m5WO8W5O7
-- https://www.digitalocean.com/community/tutorials/observer-design-pattern-in-java
+- https://gpcoder.com/4434-huong-dan-java-design-pattern-builder/
+- https://www.baeldung.com/java-builder-pattern-freebuilder
+- https://www.javastackflow.com/2022/09/how-to-use-builder-design-pattern-with.html
+- https://www.baeldung.com/lombok-builder
 
-**Mô hình tương đồng với cơ chế Pub/Sub với Topic <=> Subject :**<br/>
-- Topic/Subject là nơi chứa liên kết đến các Subscribers
-- Mỗi khi topic raise lên 1 message thì các subscribers sẽ consume message đó và có xử lý tương ứng<br/>
-  (được mô tả trong Subscriber)
+**Sử dụng Builder Pattern với việc chia nhỏ setter methods bên trong Builder :**<br/>
+- Các methods setter option sẽ được gọi linh động lúc tạo instance mới
+- Mỗi lần gọi setter option nối tiếp thì sẽ trả về Object Builder để xử lý tiếp
+- Khi hoàn tất Builder Object, ta sẽ gọi method build() của Builder để tạo Object thực tế.
+
+**Tạo BankAccount dựa vào BankAccountBuilder**
 ```shell
-public interface Observer {
-  public void consume(String message);
-}
+log.info(" >> Start Apps for Builder Pattern ... ");
+
+BankAccount account1 = new BankAccount.BankAccountBuilder("name1", "MobileNumber01")
+    .withAddress("The Address 01")
+    .withEmail("email01@test.com")
+    .wantNewsletter(true)
+    .build();
+
+BankAccount account2 = new BankAccount.BankAccountBuilder("name2", "MobileNumber02")
+    .build();
+
+BankAccount account3 = new BankAccount.BankAccountBuilder("name3", "MobileNumber03")
+    .withAddress("The Address 03")
+    .wantMobileBanking(true)
+    .build();
+
+log.info("[MainApp] :: The account1: " + account1);
+log.info("[MainApp] :: The account2: " + account2);
+log.info("[MainApp] :: The account3: " + account3);
+
+------------------------------------------------------------------------------------------
+
+> Task :MainApp.main()
+10:21:01.934 [main] INFO  -  >> Start Apps for Builder Pattern ... 
+10:21:01.938 [main] INFO  - -------------------------------------------------------------
+10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting name/accountNumber
+10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting address
+10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting email
+10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Setting newsletter
+10:21:01.939 [main] INFO  - [BankAccountBuilder] :: Try to build concrete Bank Account object: ... 
+10:21:01.940 [main] INFO  - -------------------------------------------------------------
+10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting name/accountNumber
+10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Try to build concrete Bank Account object: ... 
+10:21:01.940 [main] INFO  - -------------------------------------------------------------
+10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting name/accountNumber
+10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting address
+10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Setting mobileBanking
+10:21:01.940 [main] INFO  - [BankAccountBuilder] :: Try to build concrete Bank Account object: ... 
+10:21:01.974 [main] INFO  - [MainApp] :: The account1: BankAccount [name=name1, accountNumber=MobileNumber01, address=The Address 01, email=email01@test.com, newsletter=true, mobileBanking=false]
+10:21:01.974 [main] INFO  - [MainApp] :: The account2: BankAccount [name=name2, accountNumber=MobileNumber02, address=null, email=null, newsletter=false, mobileBanking=false]
+10:21:01.974 [main] INFO  - [MainApp] :: The account3: BankAccount [name=name3, accountNumber=MobileNumber03, address=The Address 03, email=null, newsletter=false, mobileBanking=true]
+10:21:01.974 [main] INFO  -  ------------ FINISH -------------
+
+```
 
 
-public class SubjectTopic {
-
-  private List<Observer> observers = new LinkedList<>();
-  public void attach(Observer observer) {
-    observers.add(observer);
-  }
-  public void detach(Observer observer) {
-    observers.remove(observer);
-  }
-  public void publish(String message) {
-    for(Observer observer : observers) {
-      observer.consume(message);
+**Apply Builder Pattern bằng cách sử dụng annotation `@FreeBuilder`**<br/>
+(Dựa vào dependency: `https://mvnrepository.com/artifact/org.inferred/freebuilder`)
+```shell
+@FreeBuilder
+public interface Employee {
+ 
+    String name();
+    int age();
+    String department();
+    
+    class Builder extends Employee_Builder {
     }
-  }
+```
+
+**Apply Builder Pattern bằng cách sử dụng annotation `@Builder` trong Lombok**<br/>
+(Dựa vào dependency: https://mvnrepository.com/artifact/org.projectlombok/lombok, version 1.18.30)
+```shell
+@Builder
+public class Widget {
+  private String name;
+  private Date birthday;
+  private int age;
 }
+```
 
--------------------------------------------------------------------------------
-
-Nov 25, 2023 10:45:33 PM demo.main.MainApp main
-INFO:  >> Start Apps for Observer ... 
-Nov 25, 2023 10:45:33 PM demo.impls.Observer01 consume
-INFO:  >> Consume message on Observer01, message: The message 01 from Topic ... 
-Nov 25, 2023 10:45:33 PM demo.impls.Observer02 consume
-INFO:  >> Consume message on Observer02, message: The message 01 from Topic ... 
-Nov 25, 2023 10:45:33 PM demo.impls.Observer03 consume
-INFO:  >> Consume message on Observer03, message: The message 01 from Topic ... 
-Nov 25, 2023 10:45:33 PM demo.main.MainApp main
-INFO:  ------------- Remove subscriber02 out of list of subscribers ---------- 
-Nov 25, 2023 10:45:33 PM demo.impls.Observer01 consume
-INFO:  >> Consume message on Observer01, message: New message IX from Topic ... 
-Nov 25, 2023 10:45:33 PM demo.impls.Observer03 consume
-INFO:  >> Consume message on Observer03, message: New message IX from Topic ... 
-Nov 25, 2023 10:45:33 PM demo.main.MainApp main
-INFO:  ------------ FINISH -------------
-
+**Ứng dụng thực tế**
+- Sử dụng trong khai báo của Spring Security
+```shell
+UserDetails user = User
+    .withUsername("user")
+    .password("$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG")
+    .roles("USER_ROLE")
+    .build();
 ```
