@@ -16,69 +16,89 @@ D:\Projects\design-patterns
 
 ==============================================================
 
-# Ví dụ [06.Adapter]
+# Ví dụ [07.ChainOfResponsibility]
 ==============================================================
 
-**Ý tưởng: Chuyển đổi interface/class giữa các lớp khác nhau để chúng hoạt động tương thích với nhau**<br/>
+**Ý tưởng: Gửi 1 yêu cầu qua một chuỗi các Handler cho đến khi nào nó được xử lý thì thôi**<br/>
 
 **Tham khảo**
-- https://gpcoder.com/4483-huong-dan-java-design-pattern-adapter/
-- https://viblo.asia/p/adapter-design-pattern-tro-thu-dac-luc-cua-developers-Az45bqYQlxY
+- https://gpcoder.com/4665-huong-dan-java-design-pattern-chain-of-responsibility/
+- https://viblo.asia/p/chain-of-responsibility-design-pattern-tro-thu-dac-luc-cua-developers-yMnKMBNDZ7P
 
-**Ví dụ Translation minh hoạ Adapter Pattern:**<br/>
-- Vietnamese gửi đi 1 message đến cho Japanese và mong đợi bên kia sẽ hiểu được message.
-- Bản thân Japanese chỉ hiểu được Japanese language.
-- Do vậy, ta sẽ cần 1 Adatper để chuyển đổi VN Language sang JP Language trước khi gửi qua cho Japanese
-- Thay vì gọi jpAdaptee.receive(msg) thì ta sẽ bọc JapaneseAdaptee bên trong một Adapter và gọi adapter.receive(msg). 
-Phần còn lại để Adapter lo :)
+**Ví dụ Chain of Responsibility Pattern với ứng dụng LeaveRequest:**<br/>
+- Nghỉ <= 3 days: có thể được approve bởi Supervisor
+- Nghỉ <= 5 days: có thể được approve bởi DeliveryManager
+- Nghỉ > 5 days: cần approve bởi Director
 
 
 **Mã nguồn tham khảo**
 ```shell
-public class TranslatorAdapter implements VietnameseTarget {
+public abstract class Approver {
+
   Logger log = LoggerFactory.getLogger(getClass());
 
-  private JapaneseAdaptee jpAdaptee;
+  protected Approver nextApprover;
 
-  public TranslatorAdapter(JapaneseAdaptee jpAdaptee) {
-    this.jpAdaptee = jpAdaptee;
-  }
-
-  @Override
-  public void send(String words) {
-    log.info("[TranslatorAdapter] :: Reading Words: " + words);
-    String jpWords = this.translate(words);
-
-    log.info("[TranslatorAdapter] :: Sending JP Words: " + jpWords);
-    jpAdaptee.receive(jpWords);
-  }
-
-  private String translate(String vnWords) {
-    log.info("[TranslatorAdapter] :: Translated! the VN words: " + vnWords);
-    return vnWords + "[こんにちは]";
+  public void approveLeave(LeaveRequest request) {
+    log.info("[Approver] :: Checking permission for " + this.getClass().getSimpleName());
+    if (this.canApprove(request.getDays())) {
+      log.info("[Approver] :: GOOD, leave request can be approved by " + this.getClass().getSimpleName());
+      this.doApproving(request);
+    } else if (nextApprover != null) {
+      nextApprover.approveLeave(request);
+    }
   }
 ```
 
 ```shell
-log.info(" >> Start Apps for Adapter Pattern ... ");
-log.info(" ------------------------------------------------------------------------------");
-VietnameseTarget client = new TranslatorAdapter(new JapaneseAdaptee());
+public class LeaveRequestWorkFlow {
+  public static Approver getApprover() {
+    Approver supervisor = new Supervisor();   // 1st
+    Approver manager = new DeliveryManager(); // 2nd
+    Approver director = new Director();       // 3rd
 
-String vnWords = "Xin chào!";
-log.info("[Client] :: Try to send words: " + vnWords);
-client.send(vnWords);
+    supervisor.setNext(manager);
+    manager.setNext(director);
+
+    return supervisor;
+  }
+}
 
 --------------------------------------------------------------------------------
 
+log.info(" >> Start Apps for Chain of Responsibility Pattern ... ");
+log.info(" ------------------------------------------------------------------------------");
+Approver mainApprover = LeaveRequestWorkFlow.getApprover();
+
+log.info(" ---------------------------------------------");
+mainApprover.approveLeave(new LeaveRequest(2));
+
+log.info(" ---------------------------------------------");
+mainApprover.approveLeave(new LeaveRequest(5));
+
+log.info(" ---------------------------------------------");
+mainApprover.approveLeave(new LeaveRequest(7));
+
+---------------------------------------------------------------------------------
+
 > Task :MainApp.main()
-12:41:29.085 [main] INFO  -  >> Start Apps for Adapter Pattern ... 
-12:41:29.090 [main] INFO  -  ------------------------------------------------------------------------------
-12:41:29.093 [main] INFO  - [Client] :: Try to send words: Xin chào!
-12:41:29.093 [main] INFO  - [TranslatorAdapter] :: Reading Words: Xin chào!
-12:41:29.093 [main] INFO  - [TranslatorAdapter] :: Translated! the VN words: Xin chào!
-12:41:29.094 [main] INFO  - [TranslatorAdapter] :: Sending JP Words: Xin chào![こんにちは]
-12:41:29.095 [main] INFO  - [JapaneseAdaptee] :: Retrieving words from Adapter ... Xin chào![こんにちは]
-12:41:29.096 [main] INFO  - [JapaneseAdaptee] :: Try to process next step with words: Xin chào![こんにちは]
-12:41:29.097 [main] INFO  -  ------------ FINISH -------------
+15:23:29.346 [main] INFO  -  >> Start Apps for Chain of Responsibility Pattern ... 
+15:23:29.350 [main] INFO  -  ------------------------------------------------------------------------------
+15:23:29.352 [main] INFO  -  ---------------------------------------------
+15:23:29.354 [main] INFO  - [Approver] :: Checking permission for Supervisor
+15:23:29.354 [main] INFO  - [Approver] :: GOOD, leave request can be approved by Supervisor
+15:23:29.361 [main] INFO  - [Supervisor] :: Leave request approved for 2 days by Supervisor
+15:23:29.361 [main] INFO  -  ---------------------------------------------
+15:23:29.361 [main] INFO  - [Approver] :: Checking permission for Supervisor
+15:23:29.361 [main] INFO  - [Approver] :: Checking permission for DeliveryManager
+15:23:29.361 [main] INFO  - [Approver] :: GOOD, leave request can be approved by DeliveryManager
+15:23:29.362 [main] INFO  - [DeliveryManager] :: Leave request approved for 5 days by Delivery Manager
+15:23:29.363 [main] INFO  -  ---------------------------------------------
+15:23:29.363 [main] INFO  - [Approver] :: Checking permission for Supervisor
+15:23:29.364 [main] INFO  - [Approver] :: Checking permission for DeliveryManager
+15:23:29.364 [main] INFO  - [Approver] :: Checking permission for Director
+15:23:29.364 [main] INFO  - [Approver] :: GOOD, leave request can be approved by Director
+15:23:29.364 [main] INFO  - [Director] :: Leave request approved for 7 days by Director
+15:23:29.364 [main] INFO  -  ------------ FINISH -------------
 
 ```
