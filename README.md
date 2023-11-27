@@ -16,98 +16,69 @@ D:\Projects\design-patterns
 
 ==============================================================
 
-# Ví dụ [05.Facade]
+# Ví dụ [06.Adapter]
 ==============================================================
 
-**Ý tưởng: Ẩn đi sự phức tạp của hệ thống con bên trong và đưa ra những phương thức dễ sử dụng cho UserClients**<br/>
-**Có thể xem đây là 1 service đặc biệt để gom logic phức tạp của hệ thống vào các hàm đơn giản**
+**Ý tưởng: Chuyển đổi interface/class giữa các lớp khác nhau để chúng hoạt động tương thích với nhau**<br/>
 
 **Tham khảo**
-- https://gpcoder.com/4604-huong-dan-java-design-pattern-facade/
-- https://viblo.asia/p/facade-design-pattern-tro-thu-dac-luc-cua-developers-924lJBLNlPM
+- https://gpcoder.com/4483-huong-dan-java-design-pattern-adapter/
+- https://viblo.asia/p/adapter-design-pattern-tro-thu-dac-luc-cua-developers-Az45bqYQlxY
 
-**Tạo 1 `ShopFacade` để cung cấp dịch vụ mua hàng :**<br/>
-- Có nhiều dịch vụ con bên trong, bao gồm `AccountService`, `PaymentService`, `ShippingService`, `EmailService`, `SMSService`
-- `ShopFacade` cung cấp phương thức mua hàng bằng tiền mặt, thanh toán online, ...
-- Mỗi phương thức mua hàng sẽ kèm theo gọi các dịch vụ tương ứng, vd như `EmailService`, `SMSService`
-- ClientUsers khi mua hàng chỉ quan tâm đến việc gọi ShopFacade, bỏ qua sự phức tạp khi phải triệu hồi 1 loạt các dịch vụ khác
+**Ví dụ Translation minh hoạ Adapter Pattern:**<br/>
+- Vietnamese gửi đi 1 message đến cho Japanese và mong đợi bên kia sẽ hiểu được message.
+- Bản thân Japanese chỉ hiểu được Japanese language.
+- Do vậy, ta sẽ cần 1 Adatper để chuyển đổi VN Language sang JP Language trước khi gửi qua cho Japanese
+- Thay vì gọi jpAdaptee.receive(msg) thì ta sẽ bọc JapaneseAdaptee bên trong một Adapter và gọi adapter.receive(msg). 
+Phần còn lại để Adapter lo :)
+
 
 **Mã nguồn tham khảo**
 ```shell
-public class ShopFacade {
-  private static final ShopFacade INSTANCE = new ShopFacade();
-
+public class TranslatorAdapter implements VietnameseTarget {
   Logger log = LoggerFactory.getLogger(getClass());
 
-  private AccountService accountService;
-  private PaymentService paymentService;
-  private ShippingService shippingService;
-  private EmailService emailService;
-  private SmsService smsService;
+  private JapaneseAdaptee jpAdaptee;
 
-  private ShopFacade() {
-    accountService = new AccountService();
-    paymentService = new PaymentService();
-    shippingService = new ShippingService();
-    emailService = new EmailService();
-    smsService = new SmsService();
+  public TranslatorAdapter(JapaneseAdaptee jpAdaptee) {
+    this.jpAdaptee = jpAdaptee;
   }
 
-  public static ShopFacade getInstance() {
-    return INSTANCE;
+  @Override
+  public void send(String words) {
+    log.info("[TranslatorAdapter] :: Reading Words: " + words);
+    String jpWords = this.translate(words);
+
+    log.info("[TranslatorAdapter] :: Sending JP Words: " + jpWords);
+    jpAdaptee.receive(jpWords);
   }
 
-  public void buyProductByCashWithFreeShipping(String email) {
-    log.info("[ShopFacade] :: Buy product by Cash with FreeShipping, email: " + email);
-    accountService.getAccount(email);
-    paymentService.paymentByCash();
-    shippingService.freeShipping();
-    emailService.sendMail(email);
-    log.info("[ShopFacade] :: Buy product by Cash with FreeShipping => DONE");
+  private String translate(String vnWords) {
+    log.info("[TranslatorAdapter] :: Translated! the VN words: " + vnWords);
+    return vnWords + "[こんにちは]";
   }
-
-  public void buyProductByPaypalWithStandardShipping(String email, String mobilePhone) {
-    log.info("[ShopFacade] :: Buy product by Paypal with Standard Shipping, email: " + email + ", mobilePhone: " + mobilePhone);
-    accountService.getAccount(email);
-    paymentService.paymentByPaypal();
-    shippingService.standardShipping();
-    emailService.sendMail(email);
-    smsService.sendSMS(mobilePhone);
-    log.info("[ShopFacade] :: Buy product by Paypal ... => DONE");
-  }
-}
 ```
 
-**Kết quả thực thi**
 ```shell
-log.info(" >> Start Apps for Facade Pattern ... ");
+log.info(" >> Start Apps for Adapter Pattern ... ");
 log.info(" ------------------------------------------------------------------------------");
-ShopFacade.getInstance().buyProductByCashWithFreeShipping("contact@gpcoder.com");
+VietnameseTarget client = new TranslatorAdapter(new JapaneseAdaptee());
 
-log.info(" ------------------------------------------------------------------------------");
-ShopFacade.getInstance().buyProductByPaypalWithStandardShipping(
-    "gpcodervn@gmail.com", "0988.999.999");
-log.info(" ------------ FINISH -------------");
+String vnWords = "Xin chào!";
+log.info("[Client] :: Try to send words: " + vnWords);
+client.send(vnWords);
 
----------------------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 > Task :MainApp.main()
-22:34:23.556 [main] INFO  -  >> Start Apps for Facade Pattern ... 
-22:34:23.560 [main] INFO  -  ------------------------------------------------------------------------------
-22:34:23.564 [main] INFO  - [ShopFacade] :: Buy product by Cash with FreeShipping, email: contact@gpcoder.com
-22:34:23.566 [main] INFO  - [AccountService] :: Getting the account of contact@gpcoder.com
-22:34:23.566 [main] INFO  - [PaymentService] :: Payment by cash
-22:34:23.566 [main] INFO  - [ShippingService] :: Free Shipping
-22:34:23.566 [main] INFO  - [EmailService] :: Sending an email to contact@gpcoder.com
-22:34:23.566 [main] INFO  - [ShopFacade] :: Buy product by Cash with FreeShipping => DONE
-22:34:23.566 [main] INFO  -  ------------------------------------------------------------------------------
-22:34:23.572 [main] INFO  - [ShopFacade] :: Buy product by Paypal with Standard Shipping, email: gpcodervn@gmail.com, mobilePhone: 0988.999.999
-22:34:23.573 [main] INFO  - [AccountService] :: Getting the account of gpcodervn@gmail.com
-22:34:23.573 [main] INFO  - [PaymentService] :: Payment by Paypal
-22:34:23.573 [main] INFO  - [ShippingService] :: Standard Shipping
-22:34:23.573 [main] INFO  - [EmailService] :: Sending an email to gpcodervn@gmail.com
-22:34:23.575 [main] INFO  - [SMSService] :: Sending an mesage to 0988.999.999
-22:34:23.575 [main] INFO  - [ShopFacade] :: Buy product by Paypal ... => DONE
-22:34:23.575 [main] INFO  -  ------------ FINISH -------------
+12:41:29.085 [main] INFO  -  >> Start Apps for Adapter Pattern ... 
+12:41:29.090 [main] INFO  -  ------------------------------------------------------------------------------
+12:41:29.093 [main] INFO  - [Client] :: Try to send words: Xin chào!
+12:41:29.093 [main] INFO  - [TranslatorAdapter] :: Reading Words: Xin chào!
+12:41:29.093 [main] INFO  - [TranslatorAdapter] :: Translated! the VN words: Xin chào!
+12:41:29.094 [main] INFO  - [TranslatorAdapter] :: Sending JP Words: Xin chào![こんにちは]
+12:41:29.095 [main] INFO  - [JapaneseAdaptee] :: Retrieving words from Adapter ... Xin chào![こんにちは]
+12:41:29.096 [main] INFO  - [JapaneseAdaptee] :: Try to process next step with words: Xin chào![こんにちは]
+12:41:29.097 [main] INFO  -  ------------ FINISH -------------
 
 ```
