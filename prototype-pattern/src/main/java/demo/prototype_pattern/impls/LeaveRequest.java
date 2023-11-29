@@ -1,4 +1,4 @@
-package demo.chainofresp_pattern.impls;
+package demo.prototype_pattern.impls;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

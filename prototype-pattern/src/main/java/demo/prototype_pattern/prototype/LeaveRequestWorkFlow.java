@@ -1,9 +1,9 @@
-package demo.chainofresp_pattern.chainofresp;
+package demo.prototype_pattern.prototype;
 
-import demo.chainofresp_pattern.impls.Approver;
-import demo.chainofresp_pattern.impls.DeliveryManager;
-import demo.chainofresp_pattern.impls.Director;
-import demo.chainofresp_pattern.impls.Supervisor;
+import demo.prototype_pattern.impls.Approver;
+import demo.prototype_pattern.impls.DeliveryManager;
+import demo.prototype_pattern.impls.Director;
+import demo.prototype_pattern.impls.Supervisor;
 
 public class LeaveRequestWorkFlow {
   public static Approver getApprover() {
